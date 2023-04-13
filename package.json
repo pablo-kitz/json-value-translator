@@ -1,0 +1,17 @@
+{
+	"name": "json-values-translate",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"type": "module",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@translate-tools/core": "^0.2.12",
+		"google-translate-api": "^2.3.0",
+		"inquirer": "^9.1.5"
+	}
+}
