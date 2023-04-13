@@ -5,31 +5,68 @@ import { GoogleTranslator } from '@translate-tools/core/translators/GoogleTransl
 import inquirer from 'inquirer';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __outputdir = './translations'
 const files = fs.readdirSync(__dirname)
 const htmlRegex = /<([a-z]+)([^<]+)*(?:>(.*)<\/\1>|\s+\/>)/g;
-
-function listJsonFiles() {
-  let jsonFiles = []
-  for (let file of files) {
-    if (path.extname(file) == '.json' && file !== 'package-lock.json' && file !== 'package.json') {
-      jsonFiles.push(file)
-    }
+const languages = [
+  {
+    name: 'english',
+    value: 'en',
+  },
+  {
+    name: 'spanish',
+    value: 'es',
+  },
+  {
+    name: 'portuguese',
+    value: 'pt',
   }
-  console.log(jsonFiles)
-}
+];
 
-const selectFile = async (dir) => {
-  const files = listJsonFiles()
-  const { file } = await inquirer.prompt([
+async function selectFile() {
+  const files = listJSONFiles()
+  const { fileSelect, langFrom, langTo } = await inquirer.prompt([
     {
       type: 'list',
       name: 'fileSelect',
       message: 'What file will you be translating?',
       choices: files,
     },
+    {
+      type: 'list',
+      name: 'langFrom',
+      message: 'What language is the JSON originally in?',
+      choices: languages,
+    },
+    {
+      type: 'list',
+      name: 'langTo',
+      message: 'What language do you want to translate to?',
+      choices: languages,
+    }
   ]);
-  console.log(file)
+  const selectedJson = loadJSON(fileSelect)
+  console.log(processJSON(selectedJson.parsedData, langFrom, langTo, selectedJson.filename))
 };
+
+function listJSONFiles() {
+  let jsonFiles = []
+  for (let file of files) {
+    if (path.extname(file) == '.json' && file !== 'package-lock.json' && file !== 'package.json') {
+      jsonFiles.push(file)
+    }
+  }
+  return jsonFiles
+};
+
+function loadJSON(file) {
+  const rawdata = fs.readFileSync(file)
+  const parsedFile = {
+    filename: file,
+    parsedData: JSON.parse(rawdata)
+  }
+  return parsedFile
+}
 
 const translator = new GoogleTranslator({
   headers: {
@@ -38,12 +75,12 @@ const translator = new GoogleTranslator({
   },
 });
 
-function processJSON(obj, langFrom, langTo) {
+function processJSON(obj, langFrom, langTo, filename) {
   let result = {};
   for (var key in obj) {
     result[key] = checkType(obj[key])
   }
-  return result;
+  outputJSON(obj, filename);
 }
 
 function checkType(obj) {
@@ -84,4 +121,19 @@ function processObject(obj) {
   return result
 }
 
-// processJSON(pablo, 'es', 'en');
+function outputJSON(obj, filename) {
+  const dotIndex = filename.lastIndexOf('.')
+  const outputName = filename.substring(0, dotIndex) + '-translated' + filename.substring(dotIndex)
+  const output = JSON.stringify(obj);
+  if (!fs.existsSync(__outputdir)) {
+    fs.mkdirSync(__outputdir)
+  }
+  try {
+    fs.writeFileSync(path.join(__outputdir, outputName), output)
+    return console.log('file generated succesfully, check your output folder')
+  } catch (e) {
+   throw new Error(e) 
+  }
+}
+
+selectFile()
