@@ -1,0 +1,15 @@
+{
+    "name": "mi nombre es pablo <a href='http://test'>tests</a> talaala <div>ohmyga</div>",
+    "cualidades": {
+        "altura": "mido centimetros",
+        "peso": "soy un poco flaco"
+    },
+    "logros": [
+        {
+            "logro1": "campeon en pesos livianos"
+        },
+        {
+            "logro2": "buen cocinero"
+        }
+    ]
+}

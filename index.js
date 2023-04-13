@@ -1,27 +1,35 @@
 import fs from 'fs';
-import { fileURLToPath } from 'url';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { GoogleTranslator } from '@translate-tools/core/translators/GoogleTranslator/index.js';
 import inquirer from 'inquirer';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const files = fs.readdirSync(__dirname)
+const htmlRegex = /<([a-z]+)([^<]+)*(?:>(.*)<\/\1>|\s+\/>)/g;
 
-// Testing info
-let pablo = {
-  "name": "mi nombre es pablo <a href='http://test'>tests</a> talaala <div>ohmyga</div>",
-  "cualidades": {
-    "altura": "mido centimetros",
-    "peso": "soy un poco flaco"
-  },
-  "logros": [
-    {
-      "logro1": "campeon en pesos livianos"
-    },
-    {
-      "logro2": "buen cocinero"
+function listJsonFiles() {
+  let jsonFiles = []
+  for (let file of files) {
+    if (path.extname(file) == '.json' && file !== 'package-lock.json' && file !== 'package.json') {
+      jsonFiles.push(file)
     }
-  ]
+  }
+  console.log(jsonFiles)
 }
+
+const selectFile = async (dir) => {
+  const files = listJsonFiles()
+  const { file } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'fileSelect',
+      message: 'What file will you be translating?',
+      choices: files,
+    },
+  ]);
+  console.log(file)
+};
 
 const translator = new GoogleTranslator({
   headers: {
@@ -29,8 +37,6 @@ const translator = new GoogleTranslator({
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36',
   },
 });
-
-const htmlRegex = /<([a-z]+)([^<]+)*(?:>(.*)<\/\1>|\s+\/>)/g;
 
 function processJSON(obj, langFrom, langTo) {
   let result = {};
@@ -78,30 +84,4 @@ function processObject(obj) {
   return result
 }
 
-function listJsonFiles()
-
-const selectFile = async (dir) => {
-  const files = readdirSync(dir);
-  const { file } = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'fileSelect',
-      message: 'What file will you be translating?',
-      choices: files,
-    },
-  ]);
-  console.log(file)
-};
-
-inquirer.prompt([
-  {
-    name: "jsonSelection",
-    message: "What file will you be translating?",
-    choices: [
-
-    ]
-  }]).then(answer => {
-    console.info('Answer:', answer.jsonSelection)
-  })
-
-processJSON(pablo, 'es', 'en');
+// processJSON(pablo, 'es', 'en');
