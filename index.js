@@ -25,7 +25,7 @@ const languages = [
 
 async function selectFile() {
   const files = listJSONFiles()
-  const { fileSelect, langFrom, langTo } = await inquirer.prompt([
+  const answers = await inquirer.prompt([
     {
       type: 'list',
       name: 'fileSelect',
@@ -45,8 +45,7 @@ async function selectFile() {
       choices: languages,
     }
   ]);
-  const selectedJson = loadJSON(fileSelect)
-  console.log(processJSON(selectedJson.parsedData, langFrom, langTo, selectedJson.filename))
+  return answers;
 };
 
 function listJSONFiles() {
@@ -55,6 +54,9 @@ function listJSONFiles() {
     if (path.extname(file) == '.json' && file !== 'package-lock.json' && file !== 'package.json') {
       jsonFiles.push(file)
     }
+  }
+  if (jsonFiles.length === 0) {
+    throw new Error('No editable JSON files in the directory')
   }
   return jsonFiles
 };
@@ -136,4 +138,10 @@ function outputJSON(obj, filename) {
   }
 }
 
-selectFile()
+const main = async () => {
+  const { fileSelect, langFrom, langTo } = await selectFile()
+  const selectedJson = loadJSON(fileSelect)
+  console.log(processJSON(selectedJson.parsedData, langFrom, langTo, selectedJson.filename))
+}
+
+main()
