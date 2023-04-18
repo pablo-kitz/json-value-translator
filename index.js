@@ -8,20 +8,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const __outputdir = './translations'
 const files = fs.readdirSync(__dirname)
 const htmlRegex = /<([a-z]+)([^<]+)*(?:>(.*)<\/\1>|\s+\/>)/g;
-const languages = [
-  {
-    name: 'english',
-    value: 'en',
-  },
-  {
-    name: 'spanish',
-    value: 'es',
-  },
-  {
-    name: 'portuguese',
-    value: 'pt',
-  }
-];
+
+const languages = new Map([
+  ['english', 'en'],
+  ['spanish', 'es'],
+  ['portugese', 'pt']
+]);
+let translatorConfig = {
+  langFrom: '',
+  langTo: ''
+}
 
 async function selectFile() {
   const files = listJSONFiles()
@@ -36,13 +32,13 @@ async function selectFile() {
       type: 'list',
       name: 'langFrom',
       message: 'What language is the JSON originally in?',
-      choices: languages,
+      choices: Array.from(languages.values()),
     },
     {
       type: 'list',
       name: 'langTo',
       message: 'What language do you want to translate to?',
-      choices: languages,
+      choices: Array.from(languages.values()),
     }
   ]);
   return answers;
@@ -77,17 +73,17 @@ const translator = new GoogleTranslator({
   },
 });
 
-function processJSON(obj, langFrom, langTo, filename) {
+async function processJSON(obj, filename) {
   let result = {};
   for (var key in obj) {
-    result[key] = checkType(obj[key])
+    result[key] = await checkType(obj[key])
   }
-  outputJSON(obj, filename);
+  outputJSON(result, filename);
 }
 
-function checkType(obj) {
+async function checkType(obj) {
   if (typeof obj === 'string') {
-    return processString(obj)
+    return await processString(obj)
   } else if (Array.isArray(obj)) {
     return processArray(obj)
   } else {
@@ -95,18 +91,17 @@ function checkType(obj) {
   }
 }
 
-function processString(obj) {
+async function processString(obj) {
   const matches = obj.matchAll(htmlRegex)
-  // return await translator.translate(obj[key], langFrom, langTo);
-  return obj
+  const response = await translator.translate(obj, translatorConfig.langFrom, translatorConfig.langTo);
+  return response
 }
 
 function processArray(obj) {
   let result = [];
   for (var element of obj) {
     try {
-      // let processed = await translator.translate(processValues(obj[key][i]), langFrom, langTo);
-      let processed = element
+      let processed = processString(element)
       result.push(processed);
     } catch (e) {
       new Error(e)
@@ -134,14 +129,16 @@ function outputJSON(obj, filename) {
     fs.writeFileSync(path.join(__outputdir, outputName), output)
     return console.log('file generated succesfully, check your output folder')
   } catch (e) {
-   throw new Error(e) 
+    throw new Error(e)
   }
 }
 
 const main = async () => {
   const { fileSelect, langFrom, langTo } = await selectFile()
+  translatorConfig.langFrom = langFrom;
+  translatorConfig.langTo = langTo;
   const selectedJson = loadJSON(fileSelect)
-  console.log(processJSON(selectedJson.parsedData, langFrom, langTo, selectedJson.filename))
+  processJSON(selectedJson.parsedData, selectedJson.filename)
 }
 
 main()
