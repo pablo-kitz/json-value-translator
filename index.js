@@ -125,11 +125,24 @@ function outputJSON(obj, filename) {
   if (!fs.existsSync(__outputdir)) {
     fs.mkdirSync(__outputdir)
   }
-  try {
-    fs.writeFileSync(path.join(__outputdir, outputName), output)
-    return console.log('file generated succesfully, check your output folder')
-  } catch (e) {
-    throw new Error(e)
+  if (fs.existsSync(`${__outputdir}/${outputName}`)) {
+    console.log("exists")
+    inquirer.prompt({
+      type: 'confirm',
+      name: 'overwriteFile',
+      message: 'A translation for the file you selected already exists, do you wish to overwrite it?'
+    }).then((answer) => {
+      if (answer) {
+        try {
+          fs.writeFileSync(path.join(__outputdir, outputName), output)
+          return console.log('File generated succesfully, check your output folder')
+        } catch (e) {
+          throw new Error(e)
+        }
+      } else {
+        throw new Error('Translation has been cancelled')
+      }
+    })
   }
 }
 
