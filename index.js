@@ -7,13 +7,55 @@ import inquirer from 'inquirer';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const __outputdir = './translations'
 const files = fs.readdirSync(__dirname)
-const htmlRegex = /<([a-z]+)([^<]+)*(?:>(.*)<\/\1>|\s+\/>)/g;
+const htmlRegex = /<([a-z]+)([^<]+)*(?:>(.*)<\/\1>|\s+\/>)/g; // regex validation for html tags
 
-const languages = new Map([
-  ['english', 'en'],
-  ['spanish', 'es'],
-  ['portugese', 'pt']
-]);
+const languages = [
+  {
+    name: "Automatic",
+    value: "auto",
+    short: "auto"
+  },
+  {
+    name: "English",
+    value: "en",
+    short: "en"
+  },
+  {
+    name: "Spanish",
+    value: "es",
+    short: "es"
+  },
+  {
+    name: "Portuguese",
+    value: "pt",
+    short: "pt"
+  },
+  {
+    name: "German",
+    value: "de",
+    short: "de"
+  },
+  {
+    name: "Italian",
+    value: "it",
+    short: "it"
+  },
+  {
+    name: "Lithuanian",
+    value: "lt",
+    short: "lt"
+  },
+  {
+    name: "Polish",
+    value: "pl",
+    short: "pl"
+  },
+  {
+    name: "Turkish",
+    value: "tr",
+    short: "tr"
+  },
+];
 let translatorConfig = {
   langFrom: '',
   langTo: ''
@@ -32,13 +74,13 @@ async function selectFile() {
       type: 'list',
       name: 'langFrom',
       message: 'What language is the JSON originally in?',
-      choices: Array.from(languages.values()),
+      choices: languages,
     },
     {
       type: 'list',
       name: 'langTo',
       message: 'What language do you want to translate to?',
-      choices: Array.from(languages.values()),
+      choices: languages,
     }
   ]);
   return answers;
@@ -118,7 +160,7 @@ async function processObject(obj) {
   return result
 }
 
-function outputJSON(obj, filename) {
+async function outputJSON(obj, filename) {
   const dotIndex = filename.lastIndexOf('.')
   const outputName = filename.substring(0, dotIndex) + '-translated' + filename.substring(dotIndex)
   const output = JSON.stringify(obj);
@@ -126,24 +168,26 @@ function outputJSON(obj, filename) {
     fs.mkdirSync(__outputdir)
   }
   if (fs.existsSync(`${__outputdir}/${outputName}`)) {
-    console.log("exists")
-    inquirer.prompt({
-      type: 'confirm',
-      name: 'overwriteFile',
-      message: 'A translation for the file you selected already exists, do you wish to overwrite it?'
-    }).then((answer) => {
-      if (answer) {
-        try {
-          fs.writeFileSync(path.join(__outputdir, outputName), output)
-          return console.log('File generated succesfully, check your output folder')
-        } catch (e) {
-          throw new Error(e)
-        }
-      } else {
-        throw new Error('Translation has been cancelled')
-      }
-    })
+    const answer = await confirmOverwrite()
+    if (!answer) {
+      throw new Error('Translation has been cancelled')
+    }
+  };
+  try {
+    fs.writeFileSync(path.join(__outputdir, outputName), output)
+    return console.log('File generated succesfully, check your output folder')
+  } catch (e) {
+    throw new Error(e)
   }
+}
+
+async function confirmOverwrite() {
+  const answer = await inquirer.prompt({
+    type: 'confirm',
+    name: 'overwriteFile',
+    message: 'A translation for the file you selected already exists, do you wish to overwrite it?'
+  })
+  return answer.overwriteFile
 }
 
 const main = async () => {
