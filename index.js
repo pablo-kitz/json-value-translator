@@ -110,10 +110,10 @@ function processArray(obj) {
   return result
 }
 
-function processObject(obj) {
+async function processObject(obj) {
   let result = {}
   for (var key in obj) {
-    result[key] = checkType(obj[key])
+    result[key] = await checkType(obj[key])
   }
   return result
 }
