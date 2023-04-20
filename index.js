@@ -200,6 +200,7 @@ const main = async () => {
   translatorConfig.langFrom = langFrom;
   translatorConfig.langTo = langTo;
   const selectedJson = loadJSON(fileSelect)
+  console.log('Your JSON file is being translated, please wait')
   processJSON(selectedJson.parsedData, selectedJson.filename)
 }
 
