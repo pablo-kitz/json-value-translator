@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { Scheduler } from '@translate-tools/core/util/Scheduler/Scheduler.js';
 import { GoogleTranslator } from '@translate-tools/core/translators/GoogleTranslator/index.js';
 import inquirer from 'inquirer';
 
@@ -114,6 +115,7 @@ const translator = new GoogleTranslator({
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36',
   },
 });
+const scheduler = new Scheduler(translator)
 
 async function processJSON(obj, filename) {
   let result = {};
@@ -135,7 +137,7 @@ async function checkType(obj) {
 
 async function processString(obj) {
   const matches = obj.matchAll(htmlRegex)
-  const response = await translator.translate(obj, translatorConfig.langFrom, translatorConfig.langTo);
+  const response = await scheduler.translate(obj, translatorConfig.langFrom, translatorConfig.langTo);
   return response
 }
 
