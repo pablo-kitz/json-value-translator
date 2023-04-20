@@ -136,6 +136,9 @@ async function checkType(obj) {
 }
 
 async function processString(obj) {
+  if (obj === "") {
+    return ""
+  }
   const matches = obj.matchAll(htmlRegex)
   const response = await scheduler.translate(obj, translatorConfig.langFrom, translatorConfig.langTo);
   return response
