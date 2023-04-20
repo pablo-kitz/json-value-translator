@@ -117,12 +117,12 @@ const translator = new GoogleTranslator({
 });
 const scheduler = new Scheduler(translator)
 
-async function processJSON(obj, filename) {
+async function processJSON(obj) {
   let result = {};
   for (var key in obj) {
     result[key] = await checkType(obj[key])
   }
-  outputJSON(result, filename);
+  return result
 }
 
 async function checkType(obj) {
@@ -165,9 +165,9 @@ async function processObject(obj) {
   return result
 }
 
-async function outputJSON(obj, filename) {
+async function outputJSON(obj, filename, langTo) {
   const dotIndex = filename.lastIndexOf('.')
-  const outputName = filename.substring(0, dotIndex) + '-translated' + filename.substring(dotIndex)
+  const outputName = filename.substring(0, dotIndex) + `-${langTo}` + filename.substring(dotIndex)
   const output = JSON.stringify(obj);
   if (!fs.existsSync(__outputdir)) {
     fs.mkdirSync(__outputdir)
@@ -200,8 +200,9 @@ const main = async () => {
   translatorConfig.langFrom = langFrom;
   translatorConfig.langTo = langTo;
   const selectedJson = loadJSON(fileSelect)
-  console.log('Your JSON file is being translated, please wait')
-  processJSON(selectedJson.parsedData, selectedJson.filename)
+  console.log('\x1b[35mYour JSON file is being translated, please wait')
+  const result = await processJSON(selectedJson.parsedData)
+  outputJSON(result, selectedJson.filename, langTo)
 }
 
 main()
