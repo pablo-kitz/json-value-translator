@@ -1,6 +1,6 @@
 # JSON Value Transaltor
 
-This tool is meant to provide a quick and easy way to translate, all given values in a Json file, especially useful for dealing with CMS websites which don't have integrated internationalization features.
+This tool is meant to provide a quick and easy way to translate all given values in a JSON file, especially useful for dealing with CMS websites which don't have integrated internationalization features.
 
 Built using Node.js, [Inquirer](https://www.npmjs.com/package/inquirer) for command line interface and translation is handled by [google-translate-api](https://www.npmjs.com/package//google-translate-api).
 
@@ -34,7 +34,7 @@ The command line will guide you through the next steps
 
 ## Author
 
-- [@pablo-kiz](https://github.com/pablo-kitz)
+- [@pablo-kitz](https://github.com/pablo-kitz)
 
 ## Acknowledgements
 
