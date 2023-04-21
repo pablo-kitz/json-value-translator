@@ -1,4 +1,10 @@
 .vscode/
 node_modules/
+
+# translations exclusion
 translations/
-test/
+
+# no json files except dependencies
+*.json
+!package.json
+!package-lock.json

@@ -1,14 +1,26 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { Scheduler } from '@translate-tools/core/util/Scheduler/Scheduler.js';
 import { GoogleTranslator } from '@translate-tools/core/translators/GoogleTranslator/index.js';
 import inquirer from 'inquirer';
+import { parse } from 'node-html-parser';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const __outputdir = './translations'
 const files = fs.readdirSync(__dirname)
 const htmlRegex = /<([a-z]+)([^<]+)*(?:>(.*)<\/\1>|\s+\/>)/g; // regex validation for html tags
 
+// Translator - Scheduler init
+const translator = new GoogleTranslator({
+  headers: {
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36',
+  },
+});
+const scheduler = new Scheduler(translator)
+
+// Available languages list
 const languages = [
   {
     name: "Automatic",
@@ -56,6 +68,8 @@ const languages = [
     short: "tr"
   },
 ];
+
+// Config init
 let translatorConfig = {
   langFrom: '',
   langTo: ''
@@ -108,19 +122,13 @@ function loadJSON(file) {
   return parsedFile
 }
 
-const translator = new GoogleTranslator({
-  headers: {
-    'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36',
-  },
-});
 
-async function processJSON(obj, filename) {
+async function processJSON(obj) {
   let result = {};
   for (var key in obj) {
     result[key] = await checkType(obj[key])
   }
-  outputJSON(result, filename);
+  return result
 }
 
 async function checkType(obj) {
@@ -134,9 +142,27 @@ async function checkType(obj) {
 }
 
 async function processString(obj) {
-  const matches = obj.matchAll(htmlRegex)
-  const response = await translator.translate(obj, translatorConfig.langFrom, translatorConfig.langTo);
+  if (obj === "") {
+    return ""
+  }
+  const htmlMatch = obj.match(htmlRegex)
+  if (htmlMatch) {
+    const root = parse(obj)
+    await traverse(root)
+    return root.toString()
+  }
+  const response = await scheduler.translate(obj, translatorConfig.langFrom, translatorConfig.langTo);
   return response
+}
+
+async function traverse(node) {
+  for (let child of node.childNodes) {
+    if (child.nodeType === 1) {
+      await traverse(child);
+    } else {
+      child.textContent = await scheduler.translate(child.text, translatorConfig.langFrom, translatorConfig.langTo);
+    }
+  }
 }
 
 function processArray(obj) {
@@ -160,9 +186,9 @@ async function processObject(obj) {
   return result
 }
 
-async function outputJSON(obj, filename) {
+async function outputJSON(obj, filename, langTo) {
   const dotIndex = filename.lastIndexOf('.')
-  const outputName = filename.substring(0, dotIndex) + '-translated' + filename.substring(dotIndex)
+  const outputName = filename.substring(0, dotIndex) + `-${langTo}` + filename.substring(dotIndex)
   const output = JSON.stringify(obj);
   if (!fs.existsSync(__outputdir)) {
     fs.mkdirSync(__outputdir)
@@ -195,7 +221,9 @@ const main = async () => {
   translatorConfig.langFrom = langFrom;
   translatorConfig.langTo = langTo;
   const selectedJson = loadJSON(fileSelect)
-  processJSON(selectedJson.parsedData, selectedJson.filename)
+  console.log('\x1b[35mYour JSON file is being translated, please wait')
+  const result = await processJSON(selectedJson.parsedData)
+  outputJSON(result, selectedJson.filename, langTo)
 }
 
 main()
