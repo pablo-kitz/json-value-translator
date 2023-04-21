@@ -4,12 +4,23 @@ import { fileURLToPath } from 'url';
 import { Scheduler } from '@translate-tools/core/util/Scheduler/Scheduler.js';
 import { GoogleTranslator } from '@translate-tools/core/translators/GoogleTranslator/index.js';
 import inquirer from 'inquirer';
+import { parse } from 'node-html-parser';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const __outputdir = './translations'
 const files = fs.readdirSync(__dirname)
 const htmlRegex = /<([a-z]+)([^<]+)*(?:>(.*)<\/\1>|\s+\/>)/g; // regex validation for html tags
 
+// Translator - Scheduler init
+const translator = new GoogleTranslator({
+  headers: {
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36',
+  },
+});
+const scheduler = new Scheduler(translator)
+
+// Available languages list
 const languages = [
   {
     name: "Automatic",
@@ -57,6 +68,8 @@ const languages = [
     short: "tr"
   },
 ];
+
+// Config init
 let translatorConfig = {
   langFrom: '',
   langTo: ''
@@ -109,13 +122,6 @@ function loadJSON(file) {
   return parsedFile
 }
 
-const translator = new GoogleTranslator({
-  headers: {
-    'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36',
-  },
-});
-const scheduler = new Scheduler(translator)
 
 async function processJSON(obj) {
   let result = {};
@@ -139,9 +145,24 @@ async function processString(obj) {
   if (obj === "") {
     return ""
   }
-  const matches = obj.matchAll(htmlRegex)
+  const htmlMatch = obj.match(htmlRegex)
+  if (htmlMatch) {
+    const root = parse(obj)
+    await traverse(root)
+    return root.toString()
+  }
   const response = await scheduler.translate(obj, translatorConfig.langFrom, translatorConfig.langTo);
   return response
+}
+
+async function traverse(node) {
+  for (let child of node.childNodes) {
+    if (child.nodeType === 1) {
+      await traverse(child);
+    } else {
+      child.textContent = await scheduler.translate(child.text, translatorConfig.langFrom, translatorConfig.langTo);
+    }
+  }
 }
 
 function processArray(obj) {

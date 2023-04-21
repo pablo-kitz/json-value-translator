@@ -13,6 +13,7 @@
 	"dependencies": {
 		"@translate-tools/core": "^0.2.13",
 		"google-translate-api": "^2.3.0",
-		"inquirer": "^9.1.5"
+		"inquirer": "^9.1.5",
+		"node-html-parser": "^6.1.5"
 	}
 }
