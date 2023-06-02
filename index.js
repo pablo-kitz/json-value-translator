@@ -145,12 +145,12 @@ async function processString(obj) {
   if (obj === "") {
     return ""
   }
-  const htmlMatch = obj.match(htmlRegex)
-  if (htmlMatch) {
-    const root = parse(obj)
-    await traverse(root)
-    return root.toString()
-  }
+  // const htmlMatch = obj.match(htmlRegex)
+  // if (htmlMatch) {
+  //   const root = parse(obj)
+  //   await traverse(root)
+  //   return root.toString()
+  // }
   const response = await scheduler.translate(obj, translatorConfig.langFrom, translatorConfig.langTo);
   return response
 }
